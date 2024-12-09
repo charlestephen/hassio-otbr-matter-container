@@ -3,7 +3,7 @@
 # Configure OTBR depending on add-on settings
 # ==============================================================================
 
-if bashio::config.true 'nat64'; then
+if [ "$NAT64" != "0" ] ; then
     log 'info'  "Enabling NAT64."
     ot-ctl nat64 enable
     ot-ctl dns server upstream enable
