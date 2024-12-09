@@ -13,7 +13,7 @@ with Aqara U200 Lock as it is the only Thread device I've got so far.
 
 
 Disclaimer: I am completely new to IPv6 and Thread so I don't fully know what I am doing here. Just
-read a lot of documentation and forum threads and eventually got it working using this setup.
+read documentation and forum threads and eventually got it working using this setup.
 
 ## Prerequisite
 
@@ -42,7 +42,7 @@ read a lot of documentation and forum threads and eventually got it working usin
 
 ## Setup
 
-1. Start this otbr container, see the docker-compose file and modify the environment variables
+1. Start this `ghcr.io/ownbee/hass-otbr-docker` container, see the docker-compose file and modify the environment variables
    according to you environment. The env variables are mapped from the addon config to these env
    variables:
 
