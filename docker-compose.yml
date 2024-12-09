@@ -1,0 +1,44 @@
+services:
+  otbr:
+    container_name: otbr
+    build: ./
+    restart: unless-stopped
+    privileged: true # don't change this !
+    network_mode: host # don't change this !
+    cap_add:
+      - SYS_ADMIN
+      - NET_ADMIN
+    environment:
+      DEVICE: "/dev/ttyUSB1"
+      BACKBONE_IF: enp3s0
+      FLOW_CONTROL: 1
+      FIREWALL: 1
+      NAT64: 1
+      BAUDRATE: 460800
+      OTBR_REST_PORT: 8081
+      OTBR_WEB_PORT: 7586
+      AUTOFLASH_FIRMWARE: 0
+    devices:
+      - /dev/ttyUSB1:/dev/ttyUSB1
+    volumes:
+      - ./otbr_data:/var/lib/thread
+
+
+  matter-server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    container_name: matter-server
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - ./matter_data:/data/
+      - /run/dbus:/run/dbus:ro  # For bluetooth
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      --storage-path /data
+      --paa-root-cert-dir /data/credentials
+      --bluetooth-adapter 0
+      --log-level-sdk progress
+      --primary-interface enp3s0
