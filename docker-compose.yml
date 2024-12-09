@@ -1,7 +1,7 @@
 services:
   otbr:
     container_name: otbr
-    build: ./
+    image: ghcr.io/ownbee/hass-otbr-docker
     restart: unless-stopped
     privileged: true # don't change this !
     network_mode: host # don't change this !
