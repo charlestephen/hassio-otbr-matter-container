@@ -116,6 +116,7 @@ log 'info'  "Starting otbr-agent..."
 exec s6-notifyoncheck -d -s 300 -w 300 -n 0 stdbuf -oL \
     "/usr/sbin/otbr-agent" -I ${thread_if} -B "${backbone_if}" \
         --rest-listen-address "${otbr_rest_listen}" \
+        --rest-listen-port "${otbr_rest_listen_port}" \
         -d${otbr_log_level_int} -v -s \
         "spinel+hdlc+uart://${device}?uart-baudrate=${baudrate}${flow_control}" \
         "trel://${backbone_if}"
