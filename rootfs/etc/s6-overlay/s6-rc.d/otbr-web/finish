@@ -2,4 +2,4 @@
 #==============================================================================
 # OpenThread BorderRouter web interface finish script
 #==============================================================================
-log 'info'  "otbr-web ended with exit code ${1} (signal ${2})..."
+echo "INFO: otbr-web ended with exit code ${1} (signal ${2})..."

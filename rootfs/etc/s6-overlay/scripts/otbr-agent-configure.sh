@@ -4,7 +4,7 @@
 # ==============================================================================
 
 if [ "$NAT64" != "0" ] ; then
-    log 'info'  "Enabling NAT64."
+    echo "INFO: Enabling NAT64."
     ot-ctl nat64 enable
     ot-ctl dns server upstream enable
 fi

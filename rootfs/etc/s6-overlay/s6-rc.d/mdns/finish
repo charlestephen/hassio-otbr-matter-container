@@ -2,4 +2,4 @@
 #==============================================================================
 # mDNSResponder finish script
 #==============================================================================
-log 'info'  "mDNS ended with exit code ${1} (signal ${2})..."
+echo "INFO: mDNS ended with exit code ${1} (signal ${2})..."

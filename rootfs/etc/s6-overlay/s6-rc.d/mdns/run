@@ -2,7 +2,7 @@
 # ==============================================================================
 # Start mDNSResponder daemon
 # ==============================================================================
-log 'info'  "Starting mDNS Responder..."
+echo "INFO: Starting mDNS Responder..."
 
 # mdnsd runs as daemon except when using debug mode. We prefer non-daemon, so
 # start in debug by default. It seems nto to generate a vast amount of

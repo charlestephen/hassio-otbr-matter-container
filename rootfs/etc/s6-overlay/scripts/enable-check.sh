@@ -18,5 +18,5 @@
 if [ ! -z "$NETWORK_DEVICE" ]; then
     touch /etc/s6-overlay/s6-rc.d/user/contents.d/socat-otbr-tcp
     touch /etc/s6-overlay/s6-rc.d/otbr-agent/dependencies.d/socat-otbr-tcp
-    log 'info'  "Enabled socat-otbr-tcp."
+    echo "INFO: Enabled socat-otbr-tcp."
 fi

@@ -57,13 +57,13 @@ case "${otbr_log_level}" in
         otbr_log_level_int="0"
         ;;
     *)
-        log 'info' "Unknown otbr_log_level: ${otbr_log_level}"
+        echo "INFO: Unknown otbr_log_level: ${otbr_log_level}"
         otbr_log_level_int="6"
         ;;
 esac
 
 if [ -z ${backbone_if} ]; then
-    log 'warning' "No primary network interface found! Using static eth0."
+    echo "WARNING: No primary network interface found! Using static eth0."
     backbone_if="eth0"
 fi
 
@@ -78,7 +78,7 @@ ipset create -exist otbr-ingress-allow-dst hash:net family inet6
 ipset create -exist otbr-ingress-allow-dst-swap hash:net family inet6
 
 if [ "$FIREWALL" != "0" ] ; then
-    log 'info'  "Setup OTBR firewall..."
+    echo "INFO: Setup OTBR firewall..."
     ip6tables -N $otbr_forward_ingress_chain
     ip6tables -I FORWARD 1 -o $thread_if -j $otbr_forward_ingress_chain
 
@@ -112,7 +112,7 @@ otbr_rest_listen_port="${OTBR_REST_PORT:-8081}"
 echo "${otbr_rest_listen}" > /tmp/otbr-agent-rest-api
 echo "${otbr_rest_listen_port}" >> /tmp/otbr-agent-rest-api
 
-log 'info'  "Starting otbr-agent..."
+echo "INFO: Starting otbr-agent..."
 exec s6-notifyoncheck -d -s 300 -w 300 -n 0 stdbuf -oL \
     "/usr/sbin/otbr-agent" -I ${thread_if} -B "${backbone_if}" \
         --rest-listen-address "${otbr_rest_listen}" \

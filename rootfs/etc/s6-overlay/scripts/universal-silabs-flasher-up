@@ -12,7 +12,7 @@ declare usb_product
 declare gpio_reset_flag
 
 function exit_no_firmware {
-    log 'warning' "No firmware found for the selected device, assuming firmware is installed."
+    echo "WARNING: No firmware found for the selected device, assuming firmware is installed."
     exit 0
 }
 
@@ -41,36 +41,36 @@ device=$DEVICE
 gpio_reset_flag=""
 
 if [ "$AUTOFLASH_FIRMWARE" != "1" ] ; then
-    log 'info'  "Flashing firmware is disabled"
+    echo "INFO: Flashing firmware is disabled"
     exit 0
 fi
 
 if [ ! -z "$NETWORK_DEVICE" ]; then
-    log 'info'  "Network device is selected, skipping firmware flashing"
+    echo "INFO: Network device is selected, skipping firmware flashing"
     exit 0
 fi
 
 if is_home_assistant_yellow; then
-    log 'info'  "Detected Home Assistant Yellow"
+    echo "INFO: Detected Home Assistant Yellow"
     firmware="yellow_openthread_rcp_2.4.4.0_GitHub-7074a43e4_gsdk_4.4.4.gbl"
     gpio_reset_flag="--bootloader-reset yellow"
 else
     # Check device manufacturer/product information
     usb_device_path=$(realpath /sys/class/tty/$(readlink /sys/class/tty/$(basename ${device}) | sed 's:/[^/]*tty[^/]*::g' )/../)
     if [ ! -f "${usb_device_path}/idProduct" ]; then
-        log 'info'  "The selected serial port is not a USB device."
+        echo "INFO: The selected serial port is not a USB device."
         exit_no_firmware
     fi
 
     if [ ! -f "${usb_device_path}/manufacturer" ] || [ ! -f "${usb_device_path}/product" ]; then
-        log 'info'  "USB device is missing manufacturer or product name."
+        echo "INFO: USB device is missing manufacturer or product name."
         exit_no_firmware
     fi
 
     usb_manufacturer=$(cat "${usb_device_path}/manufacturer")
     usb_product=$(cat "${usb_device_path}/product")
 
-    log 'info'  "Checking ${device} identifying ${usb_product} from ${usb_manufacturer}."
+    echo "INFO: Checking ${device} identifying ${usb_product} from ${usb_manufacturer}."
     if [[ "${usb_manufacturer}" == "Nabu Casa" && "${usb_product}" == "SkyConnect"* ]]; then
         firmware="skyconnect_openthread_rcp_2.4.4.0_GitHub-7074a43e4_gsdk_4.4.4.gbl"
     elif [[ "${usb_manufacturer}" == "Nabu Casa" && "${usb_product}" == "Home Assistant Connect ZBT-1"* ]]; then
@@ -86,6 +86,6 @@ else
     fi
 fi
 
-log 'info'  "Starting universal-silabs-flasher with ${device}"
+echo "INFO: Starting universal-silabs-flasher with ${device}"
 exec universal-silabs-flasher --device ${device}  ${gpio_reset_flag}  \
      flash --ensure-exact-version --allow-cross-flashing --firmware "/root/${firmware}"

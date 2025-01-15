@@ -2,7 +2,7 @@
 # ==============================================================================
 # Start OpenThread BorderRouter web interface
 # ==============================================================================
-log 'info'  "Starting otbr-web..."
+echo "INFO: Starting otbr-web..."
 declare otbr_web_port
 
 otbr_web_port="${OTBR_WEB_PORT:-8080}"
