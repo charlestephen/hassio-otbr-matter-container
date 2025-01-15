@@ -20,6 +20,7 @@ services:
       AUTOFLASH_FIRMWARE: 0
     devices:
       - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/net/tun:/dev/net/tun
     volumes:
       - ./otbr_data:/var/lib/thread
 
