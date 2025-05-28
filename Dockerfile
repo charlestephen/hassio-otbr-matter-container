@@ -1,4 +1,5 @@
-FROM homeassistant/amd64-addon-otbr:2.13.0
+ARG ARCH_PREFIX
+FROM homeassistant/${ARCH_PREFIX}-addon-otbr AS base
+FROM base
 
 COPY rootfs /
-
