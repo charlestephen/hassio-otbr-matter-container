@@ -2,7 +2,7 @@
 # ==============================================================================
 # Start OpenThread BorderRouter web interface
 # ==============================================================================
-if [ "$OTBR_WEB" != "0" ]; then
+if [ "${OTBR_WEB:-1}" != "0" ]; then
     echo "INFO: Starting otbr-web..."
     declare otbr_web_port
 
@@ -11,4 +11,5 @@ if [ "$OTBR_WEB" != "0" ]; then
     exec stdbuf -oL /usr/sbin/otbr-web -I wpan0 -d6 -s -p "${otbr_web_port}"
 else
     echo "INFO: Skipping otbr-web, disabled..."
+    exec s6-pause
 fi
