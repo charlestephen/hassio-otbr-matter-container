@@ -1,13 +1,17 @@
 #!/usr/bin/with-contenv bash
+# vim: ft=bash
+# shellcheck shell=bash
 # ==============================================================================
 # Start OpenThread BorderRouter web interface
 # ==============================================================================
-if [[ "${OTBR_WEB:-1}" == "0" ]]; then
+
+if [ x"${OTBR_WEB:-1}" = x"0" ]; then
     echo "INFO: Skipping otbr-web, disabled..."
     exec s6-pause
 fi
 
 echo "INFO: Starting otbr-web..."
+declare otbr_web_port
 
 otbr_web_args=(
     "-I" "wpan0"

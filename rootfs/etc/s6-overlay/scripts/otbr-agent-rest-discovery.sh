@@ -1,4 +1,5 @@
 #!/usr/bin/with-contenv bash
+# shellcheck shell=bash
 # ==============================================================================
 # Send OTBR discovery information to Home Assistant
 # ==============================================================================
@@ -13,7 +14,7 @@
 
 # # Send discovery info
 # if bashio::discovery "otbr" "${config}" > /dev/null; then
-#     log 'info'  "Successfully sent discovery information to Home Assistant."
+#     bashio::log.info "Successfully sent discovery information to Home Assistant."
 # else
 #     bashio::log.error "Discovery message to Home Assistant failed!"
 # fi
