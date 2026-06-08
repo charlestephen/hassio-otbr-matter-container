@@ -32,7 +32,7 @@ if [ -z "${backbone_if}" ] ; then
     exit 1
 fi
 
-if [ -z ${trel_if} ]; then
+if [ -z "${trel_if}" ]; then
     echo "WARNING: No primary trel interface found! Using ${backbone_if} interface"
     trel_if=${backbone_if}
 fi
@@ -142,7 +142,7 @@ otbr_rest_listen_port="${OTBR_REST_PORT:-8081}"
 # If user port is not set, listen on local interface only
 if [ -z "${otbr_rest_listen_port}" ] ; then
     otbr_rest_listen_port="8081"
-elif [ "${otbr_rest_listen_port}" != "8081" ]; then
+elif [ x"${otbr_rest_listen_port}" != x"8081" ]; then
     echo "WARNING: Custom OpenThread REST API port is not supported. Using 8081."
     otbr_rest_listen_port="8081"
 fi

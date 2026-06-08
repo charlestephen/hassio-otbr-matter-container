@@ -50,7 +50,7 @@ if [ -n "${OTBR_WEB}" ] ; then
     touch /etc/s6-overlay/s6-rc.d/user/contents.d/otbr-web
     echo "INFO: Web UI and REST API port are exposed, starting otbr-web."
 else
-    rm /etc/s6-overlay/s6-rc.d/user/contents.d/otbr-web
+    rm -f /etc/s6-overlay/s6-rc.d/user/contents.d/otbr-web
     echo "INFO: The otbr-web is disabled."
 fi
 
