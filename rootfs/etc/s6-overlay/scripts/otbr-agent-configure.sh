@@ -12,7 +12,7 @@ if [ x"${NAT64}" = x"1" ] ; then
     ot-ctl dns server upstream enable
 fi
 
-mdns_localhostname="$(hostname)-otbr"
+mdns_localhostname="$(hostname -s)-otbr"
 echo "INFO: Setting OpenThread mDNS local hostname to ${mdns_localhostname}."
 ot-ctl mdns localhostname "${mdns_localhostname}"
 ot-ctl mdns enable
