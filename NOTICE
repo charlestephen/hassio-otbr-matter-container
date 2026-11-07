@@ -1,0 +1,18 @@
+hassio-otbr-matter-container
+Copyright 2026 Charles Stephen Thompson
+
+This product includes software derived from:
+
+  Home Assistant OpenThread Border Router app
+  https://github.com/home-assistant/addons
+  Copyright The Home Assistant Authors
+  Licensed under the Apache License, Version 2.0
+
+  Stand-alone packaging patterns from ownbee/hass-otbr-docker
+  https://github.com/ownbee/hass-otbr-docker
+  (no license file published upstream at the time of forking)
+
+OpenThread Border Router runtime components in the base image are covered by
+their own licenses (typically BSD-3-Clause for OpenThread / ot-br-posix).
+The Python Matter Server image referenced by compose.yml is separately
+licensed (Apache-2.0) by home-assistant-libs/python-matter-server.

@@ -10,8 +10,8 @@ Assistant OS.
 - GHCR: `ghcr.io/charlestephen/hassio-otbr-matter-container:latest`
 - Docker Hub: `docker.io/charlestephen/hassio-otbr-matter-container:latest`
 
-**Base:** `homeassistant/{amd64,aarch64}-addon-otbr:latest` (HA OTBR **3.3.0** /
-OTBR POSIX v2026.09.0). Packaging lineage:
+**Base:** `homeassistant/{amd64,aarch64}-addon-otbr:<version>` (pinned in
+`upstream_version.txt`, currently **3.3.0** / OTBR POSIX v2026.09.0). Packaging lineage:
 [ownbee/hass-otbr-docker](https://github.com/ownbee/hass-otbr-docker),
 multi-arch pattern from
 [wittdennis/homeassistant-otbr](https://github.com/wittdennis/homeassistant-otbr).
@@ -175,15 +175,21 @@ Further reading:
 * https://www.phoscon.de/en/openthread/doc
 * https://github.com/home-assistant/addons/tree/master/openthread_border_router
 
-## Build
+## Build / releases (automated)
 
-CI builds each arch (`ARCH=amd64` / `ARCH=aarch64`) from `Containerfile`,
-pushes digests to GHCR, publishes a multi-arch manifest, and mirrors tags to
-Docker Hub (`DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`).
+| Piece | What it does |
+|-------|----------------|
+| **Renovate** (`renovate.json`) | Bumps `Containerfile` `ARG VERSION` + `upstream_version.txt` when `homeassistant/amd64-addon-otbr` publishes a new tag; also groups GitHub Actions updates |
+| **Build container image** | Multi-arch from `Containerfile` → GHCR + Docker Hub mirror |
+| **Publish GitHub Release** | On main bumps to those files (or `v*` tags / manual dispatch): creates/updates `vX.Y.Z` with notes from `CHANGELOG.md` + live HA OTBR changelog |
+
+Merge the Renovate PR (or wait if you enable automerge); the release workflow fills the GitHub Releases page. Approve Renovate onboarding PR [#1](https://github.com/charlestephen/hassio-otbr-matter-container/pull/1) if it is still open, or install the Renovate GitHub App on this repo.
 
 ```bash
-podman build -f Containerfile --build-arg ARCH=aarch64 --build-arg VERSION=latest -t otbr:local .
+podman build -f Containerfile --build-arg ARCH=aarch64 --build-arg VERSION="$(cat upstream_version.txt)" -t otbr:local .
 ```
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Sponsor
 

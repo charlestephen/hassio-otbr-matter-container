@@ -52,6 +52,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
 
+      - name: Upstream OTBR version
+        id: otbr
+        run: echo "version=$(tr -d '[:space:]' < upstream_version.txt)" >> "$GITHUB_OUTPUT"
+
       - name: Build (PR — no push)
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
@@ -61,7 +65,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           build-args: |
             ARCH=${{ matrix.arch }}
-            VERSION=latest
+            VERSION=${{ steps.otbr.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           load: false
           push: false
@@ -79,7 +83,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           build-args: |
             ARCH=${{ matrix.arch }}
-            VERSION=latest
+            VERSION=${{ steps.otbr.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.arch }}

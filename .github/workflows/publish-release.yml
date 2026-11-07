@@ -1,0 +1,63 @@
+# After Renovate (or a human) bumps the OTBR base on main, publish a GitHub
+# Release whose notes come from CHANGELOG.md + the HA OTBR app CHANGELOG.
+name: Publish GitHub Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Containerfile
+      - upstream_version.txt
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without v prefix (default: upstream_version.txt)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_VERSION:-}" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="$(tr -d '[:space:]' < upstream_version.txt)"
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Refusing non-semver version: $VERSION"
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build release notes from upstream + local CHANGELOG
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: python3 scripts/release-notes.py "$VERSION" > /tmp/notes.md
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --title "$tag" --notes-file /tmp/notes.md
+          else
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes-file /tmp/notes.md \
+              --target "${{ github.sha }}"
+          fi

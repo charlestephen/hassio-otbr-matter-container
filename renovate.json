@@ -1,6 +1,41 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "commitMessagePrefix": "chore(deps):",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^Containerfile$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\nARG VERSION=(?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^upstream_version\\.txt$"],
+      "matchStrings": ["^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$"],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "homeassistant/amd64-addon-otbr",
+      "versioningTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "HA OTBR app base image — bump Containerfile + upstream_version.txt together",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "homeassistant/amd64-addon-otbr",
+        "docker.io/homeassistant/amd64-addon-otbr"
+      ],
+      "groupName": "homeassistant-addon-otbr",
+      "commitMessageTopic": "Home Assistant OTBR base",
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "schedule": ["before 6am on monday"]
+    }
   ]
 }
