@@ -1,94 +1,190 @@
-# Home Assistant: Docker OpenThread Border Router
+# hassio-otbr-matter-container
 
-Stand-alone Home Assistant OpenThread Border Router docker container. For containerized home
-assistance setup without Yellow or HassOS.
+Multi-arch OpenThread Border Router image plus a **Compose** stack that runs
+stock **Home Assistant Container**, **OTBR**, and the official **Python Matter
+Server** together on host networking so Thread/Matter works without Home
+Assistant OS.
 
-This is a docker container based on the Home Assistant OpenThread Border Router add-on
-(https://github.com/home-assistant/addons/tree/master/openthread_border_router) to get the patches
-and quirks that the hass team has made. It is the same without the bashio stuff that communicates
-with home assistance instance in some way. Just to make the container work stand-alone.
+**OTBR image** (multi-arch `linux/amd64` + `linux/arm64`):
 
-Tested with [Home Assistant Connect ZBT-1](https://www.home-assistant.io/connectzbt1/). Only tested
-with Aqara U200 Lock as it is the only Thread device I've got so far.
+- GHCR: `ghcr.io/charlestephen/hassio-otbr-matter-container:latest`
+- Docker Hub: `docker.io/charlestephen/hassio-otbr-matter-container:latest`
 
+**Base:** `homeassistant/{amd64,aarch64}-addon-otbr:latest` (HA OTBR **3.3.0** /
+OTBR POSIX v2026.09.0). Packaging lineage:
+[ownbee/hass-otbr-docker](https://github.com/ownbee/hass-otbr-docker),
+multi-arch pattern from
+[wittdennis/homeassistant-otbr](https://github.com/wittdennis/homeassistant-otbr).
 
-Disclaimer: I am completely new to IPv6 and Thread so I don't fully know what I am doing here. Just
-read documentation and forum threads and eventually got it working using this setup.
+Defaults target a **ConBee II** flashed with Phoscon Thread RCP firmware
+(experimental; Phoscon prefers ConBee III for production Thread).
 
-## Prerequisite
+Build definition: `Containerfile`. Stack definition: `compose.yml`.
 
-1. It did not work until I turned on IPv6 on my LAN (without ISP involved). I use Unifi networking
-   hardware so I enabled static IPv6 in the Unifi Controller for the Default network:
-    * Used https://unique-local-ipv6.com/# for generating a local IPv6 subnet and added ":0001" as
-      gateway address. For example: `fda1:1c14:16ac:0001::/64` (starting `fd` means local).
-    * Configured SLAAC and enabled IPv6 DNS server.
-    * IPv6 on WAN interface disabled.
-    * Also enabled mDNS and IGMP snooping on the Default network.
-2. Configured the docker host with the following sysctl:
+## How the three containers talk
 
-    ```
-    net.ipv6.conf.all.disable_ipv6 = 0
-    net.ipv4.conf.all.forwarding = 1
-    net.ipv6.conf.all.forwarding = 1
-    net.ipv6.conf.all.accept_ra_rt_info_max_plen = 64
-    net.ipv6.conf.all.accept_ra = 2
-    ```
-3. Flash the OpenThreadRCP firmware on the Home Assistant Connect ZBT-1 stick. I used the python
-   flasher and the latest v2.4.0.0 firmware.
+All three services use `network_mode: host`. That is intentional: Matter/Thread
+need the host’s IPv6 stack, mDNS, and (for commissioning) Bluetooth/D-Bus.
+There is no bridge “link” to configure.
 
-    * Firmware repo: https://github.com/NabuCasa/silabs-firmware
-    * Python flasher: https://github.com/NabuCasa/universal-silabs-flasher
+| Piece | Listens on host | Home Assistant uses |
+|-------|-----------------|---------------------|
+| OTBR REST | `http://127.0.0.1:8081` | **Open Thread Border Router** integration URL |
+| OTBR web (optional) | `http://127.0.0.1:8080` | Browser only |
+| Matter Server WebSocket | `ws://127.0.0.1:5580/ws` | **Matter** integration URL |
+| Home Assistant UI | `http://127.0.0.1:8123` | You |
 
+Because HA shares the host network namespace, `127.0.0.1` inside the HA
+container **is** the host — so Matter and OTBR are reached without publishing
+extra ports or putting containers on a user-defined network.
 
-## Setup
+```text
+  ┌─────────────────────────────────────────────────────────────┐
+  │ Host network namespace                                      │
+  │  HA :8123  ←→  Matter :5580/ws  ←→  Thread/Matter devices   │
+  │  HA        ←→  OTBR   :8081     ←→  ConBee II RCP (Thread)  │
+  └─────────────────────────────────────────────────────────────┘
+```
 
-1. Start this `ghcr.io/ownbee/hass-otbr-docker` container, see the docker-compose file and modify the environment variables
-   according to you environment. The env variables are mapped from the addon config to these env
-   variables:
+If Home Assistant already runs elsewhere (not in this compose file), point its
+integrations at the **host IP** instead of loopback, e.g.
+`http://10.0.3.4:8081` and `ws://10.0.3.4:5580/ws`, and still run `otbr` +
+`matter-server` with host networking on the machine that has the radio + BT.
 
-    | ENV VARIABLE       | Description                                            |
-    |--------------------|--------------------------------------------------------|
-    | DEVICE             | Serial port where the OpenThread RCP Radio is attached. Set to `/tmp/ttyOTBR` if using network-based RCP |
-    | BAUDRATE           | Serial port baudrate (depends on firmware)   |
-    | FLOW_CONTROL (1 or 0) | If hardware flow control should be enabled (depends on firmware) |
-    | AUTOFLASH_FIRMWARE (1 or 0) | Automatically install/update firmware (Home Assistant SkyConnect/Yellow) |
-    | OTBR_LOG_LEVEL     | Set the log level of the OpenThread BorderRouter Agent (debug,info,notice,warning,error,critical,alert,emergency)    |
-    | OTBR_REST_PORT     | Port for REST API used by home assistant |
-    | OTBR_WEB_PORT      | Port for WEB UI |
-    | OTBR_WEB_INTERFACE | *empty* | (Optional) Interface to listen on (e.g. `eth0` or `127.0.0.1`). Default is all interfaces. |
-    | OTBR_WEB (1 or 0)  | Enable or disable WEB UI |
-    | FIREWALL (1 or 0)  | Enable OpenThread Border Router firewall to block unnecessary traffic |
-    | NAT64 (1 or 0)     | Enable NAT64 to allow Thread devices accessing IPv4 addresses |
-    | NETWORK_DEVICE     | IP address and port to connect to a network-based RCP (NOT TESTED) |
-    | BACKBONE_IF        | Host network interface to use (e.g. eth0, wlan0, enp3s0) |
-    | THREAD_BETA        | Define (i.e. set to '1') to enable Thread 1.4+ beta binaries |
+## Prerequisite (host + LAN)
 
-2. Install the `Open Thread Border Router`, `Thread` and `Matter` integrations in your home assistance instance.
+1. **IPv6 on LAN** (ULA is fine). UniFi: static ULA (e.g. from
+   https://unique-local-ipv6.com/), SLAAC, IPv6 DNS; enable mDNS/IGMP as needed.
+2. **Host sysctl:**
 
-3. Integrations -> Open Thread Border Router, and add your border router container that you just
-   started. I used "http://<HOST_IP>:8081".
+   ```
+   net.ipv6.conf.all.disable_ipv6 = 0
+   net.ipv4.conf.all.forwarding = 1
+   net.ipv6.conf.all.forwarding = 1
+   net.ipv6.conf.all.accept_ra_rt_info_max_plen = 64
+   net.ipv6.conf.all.accept_ra = 2
+   ```
 
-4. Go to Integrations -> Thread -> Configure and add the OTBR network, it should pop-up after the
-   last step. Click "Make as preferred", "Reset Border router" and Enable Android/IOS commissioning.
+3. `modprobe tun`. Firewall: allow `8123`, `8081`, `8080`, `5580` if filtered.
+4. ConBee II flashed with Phoscon OT RCP (GCFFlasher +
+   [conbee2 firmware](https://phoscon.de/downloads/openthread/firmware/conbee2/)),
+   **not** Nabu Casa `universal-silabs-flasher`.
 
-5. You might have to go to https://<YOUR_HASS_URL>`/config/matter/dashboard` and "SET THREAD
-   CREDENTIALS" to the dataset found with clicking the "i" in your Thread integration. Unclear if
-   this is needed.
+## ConBee II OTBR settings
 
-5. On you Android Phone, go to Settings -> App -> Troubleshooting and click on Sync Thread Auth.
+| Setting | Value | Why |
+|---------|--------|-----|
+| `DEVICE` | by-id `…Thread_RCP__ConBee_II…` | Stable path |
+| `BAUDRATE` | `115200` | Not ZBT-1’s `460800` |
+| `FLOW_CONTROL` | `1` | Phoscon: HW flow control **on** (ConBee III: off) |
+| `AUTOFLASH_FIRMWARE` | `0` | Never flash Nabu Casa firmware onto a ConBee |
+| Volume | `…:/data/thread` | Persistent Thread dataset |
 
-6. Pair a Thread device by scanning the Matter QR-Code with Integrations -> Add Matter device -> New device.
+## Bring-up (stock HA + OTBR + Matter)
 
-7. The Android based commissioning/pairing took roughly 2-3 minutes but succeeded eventually.
+1. Copy env and set radio + uplink:
 
-Also see the following documentation for further information:
+   ```bash
+   cp .env.example .env
+   # edit DEVICE / DEVICE_HOST / BACKBONE_IF (ip -br link)
+   mkdir -p ha_config otbr_data matter_data
+   ```
 
-* https://openthread.io/guides/border-router/docker
-* https://github.com/home-assistant/addons/tree/master/openthread_border_router
+2. Start the stack (`podman compose` or `docker compose`):
+
+   ```bash
+   podman compose up -d
+   ```
+
+3. Open Home Assistant (`http://<host>:8123`) and finish onboarding if new.
+
+4. **Open Thread Border Router** → Add integration → URL:
+
+   ```text
+   http://127.0.0.1:8081
+   ```
+
+   (Use the host LAN IP if HA is not on this compose/`host` network.)
+
+5. **Thread** → Configure → select the OTBR network → **Make preferred** →
+   enable **Used for Android + iOS credentials**. Reset border router only if
+   you intend to wipe the Thread dataset.
+
+6. **Matter** → Add integration → connect to the Matter Server WebSocket:
+
+   ```text
+   ws://127.0.0.1:5580/ws
+   ```
+
+   HA Container does **not** auto-install the Matter add-on; this WebSocket is
+   how the stock container is wired to Matter Server.
+
+7. Companion app → Troubleshooting → **Sync Thread credentials** (often twice
+   until it reports the phone and HA share the same network).
+
+8. Add Matter devices via the companion app (Bluetooth for first commission).
+
+Optional: set Thread credentials in the Matter dashboard
+(`/config/matter/dashboard`) from the Thread integration “i” dataset if
+commissioning stalls.
+
+### Already have Home Assistant Container?
+
+Keep your existing `homeassistant` service; compose only `otbr` +
+`matter-server` from this file (or delete/disable the `homeassistant` service).
+Requirements that do not change:
+
+- HA must use **`network_mode: host`** (or otherwise reach host `:8081` / `:5580`).
+- Mount `/run/dbus` into HA if you want BT-assisted flows from HA’s side too.
+- Same integration URLs as above (`127.0.0.1` when HA is host-networked on the
+  same machine).
+
+### Health checks
+
+```bash
+podman compose ps
+curl -sf http://127.0.0.1:8081/node/dataset/active | head
+curl -sf http://127.0.0.1:5580/   # Matter Server info page
+podman logs otbr --tail 80
+podman logs matter-server --tail 80
+```
+
+OTBR log should show `uart-baudrate=115200` and `&uart-flow-control` for ConBee II.
+Spinel timeouts usually mean wrong baud, flow control, device path, or firmware.
+
+## OTBR environment reference
+
+| ENV | Description |
+|-----|-------------|
+| `DEVICE` | Serial path for the RCP |
+| `BAUDRATE` | ConBee II: `115200` |
+| `FLOW_CONTROL` | `1` = hardware RTS/CTS |
+| `AUTOFLASH_FIRMWARE` | Keep `0` for ConBee |
+| `OTBR_LOG_LEVEL` | `debug`…`emergency` |
+| `OTBR_REST_PORT` / `OTBR_WEB_PORT` | Default `8081` / `8080` |
+| `OTBR_WEB` | `1`/`0` web UI |
+| `FIREWALL` / `NAT64` | OTBR firewall / NAT64 |
+| `BACKBONE_IF` / `TREL_IF` | Host uplink (and optional TREL) |
+| `THREAD_BETA` | `1` for HA image beta OTBR binaries |
+
+Further reading:
+
+* https://github.com/home-assistant-libs/python-matter-server/blob/main/docs/docker.md
 * https://www.home-assistant.io/integrations/matter
 * https://www.home-assistant.io/integrations/thread
+* https://www.phoscon.de/en/openthread/doc
+* https://github.com/home-assistant/addons/tree/master/openthread_border_router
 
+## Build
 
-# Buy me a coffee
+CI builds each arch (`ARCH=amd64` / `ARCH=aarch64`) from `Containerfile`,
+pushes digests to GHCR, publishes a multi-arch manifest, and mirrors tags to
+Docker Hub (`DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`).
 
-I am using my free time maintaining this at nights while the kids are asleep. Buy me a [ko-fi.com/ownbee](https://ko-fi.com/ownbee) if you like to boost my maintenance motivation and keep me awake.
+```bash
+podman build -f Containerfile --build-arg ARCH=aarch64 --build-arg VERSION=latest -t otbr:local .
+```
+
+## Sponsor
+
+[Buy Me a Coffee](https://buymeacoffee.com/charlestephen)

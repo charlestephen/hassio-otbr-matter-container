@@ -1,0 +1,89 @@
+# Stock Home Assistant Container + OTBR + Matter Server (host networking).
+# ConBee II Thread RCP defaults: baud 115200, FLOW_CONTROL=1, AUTOFLASH=0.
+#
+# Copy .env.example → .env and set DEVICE, BACKBONE_IF (and by-id device path).
+# Run with: podman compose up -d   (or docker compose up -d)
+
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      - ${HA_CONFIG:-./ha_config}:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    # Host network means HA reaches Matter at ws://127.0.0.1:5580/ws and
+    # OTBR at http://127.0.0.1:8081 with no extra links or port maps.
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "3"
+        max-size: "1m"
+
+  otbr:
+    container_name: otbr
+    # Also: docker.io/charlestephen/hassio-otbr-matter-container:latest
+    image: ghcr.io/charlestephen/hassio-otbr-matter-container:latest
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    cap_add:
+      - SYS_ADMIN
+      - NET_ADMIN
+    environment:
+      DEVICE: ${DEVICE:-/dev/ttyACM0}
+      BACKBONE_IF: ${BACKBONE_IF:-eth0}
+      BAUDRATE: ${BAUDRATE:-115200}
+      FLOW_CONTROL: ${FLOW_CONTROL:-1}
+      AUTOFLASH_FIRMWARE: "0"
+      FIREWALL: ${FIREWALL:-1}
+      NAT64: ${NAT64:-1}
+      OTBR_REST_PORT: ${OTBR_REST_PORT:-8081}
+      OTBR_WEB_PORT: ${OTBR_WEB_PORT:-8080}
+      OTBR_WEB: ${OTBR_WEB:-1}
+      OTBR_LOG_LEVEL: ${OTBR_LOG_LEVEL:-notice}
+    devices:
+      - ${DEVICE_HOST:-/dev/ttyACM0}:${DEVICE:-/dev/ttyACM0}
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ${OTBR_DATA:-./otbr_data}:/data/thread
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "3"
+        max-size: "1m"
+
+  matter-server:
+    container_name: matter-server
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - ${MATTER_DATA:-./matter_data}:/data
+      - /run/dbus:/run/dbus:ro
+      - /etc/localtime:/etc/localtime:ro
+    # WebSocket for HA Matter integration: ws://127.0.0.1:5580/ws
+    command:
+      - --storage-path
+      - /data
+      - --paa-root-cert-dir
+      - /data/credentials
+      - --bluetooth-adapter
+      - ${MATTER_BT_ADAPTER:-0}
+      - --log-level-sdk
+      - progress
+      - --primary-interface
+      - ${BACKBONE_IF:-eth0}
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "3"
+        max-size: "1m"

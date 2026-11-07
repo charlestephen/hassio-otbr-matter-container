@@ -1,0 +1,6 @@
+otbr_data/
+matter_data/
+ha_config/
+.env
+.DS_Store
+*.log
