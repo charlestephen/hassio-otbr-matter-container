@@ -1,6 +1,7 @@
-otbr_data/
-matter_data/
-ha_config/
 .env
 .DS_Store
 *.log
+
+# Local tooling and OS files
+.gitignore
+.gitguardian*
