@@ -197,3 +197,17 @@ jobs:
             docker buildx imagetools create -t "${DOCKERHUB_IMAGE}:${src##*:}" "$src"
           done <<< "$TAGS"
           docker buildx imagetools inspect "${DOCKERHUB_IMAGE}:latest"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Update Docker Hub overview
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/hassio-otbr-matter-container
+          short-description: OpenThread Border Router image and Compose stack for Home Assistant Container with Matter Server.
+          readme-filepath: docs/dockerhub.md
