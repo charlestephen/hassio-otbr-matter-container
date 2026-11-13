@@ -1,20 +1,30 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "labels": ["dependencies"],
+  "extends": [
+    "config:best-practices"
+  ],
+  "labels": [
+    "dependencies"
+  ],
   "commitMessagePrefix": "chore(deps):",
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^Containerfile$"],
+      "managerFilePatterns": [
+        "/^Containerfile$/"
+      ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\nARG VERSION=(?<currentValue>\\S+)"
       ]
     },
     {
       "customType": "regex",
-      "fileMatch": ["^upstream_version\\.txt$"],
-      "matchStrings": ["^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$"],
+      "managerFilePatterns": [
+        "/^upstream_version\\.txt$/"
+      ],
+      "matchStrings": [
+        "^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$"
+      ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "homeassistant/amd64-addon-otbr",
       "versioningTemplate": "docker"
@@ -22,20 +32,28 @@
   ],
   "packageRules": [
     {
-      "description": "HA OTBR app base image — bump Containerfile + upstream_version.txt together",
-      "matchDatasources": ["docker"],
+      "description": "HA OTBR app base image \u2014 bump Containerfile + upstream_version.txt together",
+      "matchDatasources": [
+        "docker"
+      ],
       "matchPackageNames": [
         "homeassistant/amd64-addon-otbr",
         "docker.io/homeassistant/amd64-addon-otbr"
       ],
       "groupName": "homeassistant-addon-otbr",
       "commitMessageTopic": "Home Assistant OTBR base",
-      "schedule": ["before 6am on monday"]
+      "schedule": [
+        "before 6am on monday"
+      ]
     },
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "github-actions",
-      "schedule": ["before 6am on monday"]
+      "schedule": [
+        "before 6am on monday"
+      ]
     }
   ]
 }
