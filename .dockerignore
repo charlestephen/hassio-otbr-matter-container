@@ -1,0 +1,12 @@
+.git
+.github
+.env
+.env.*
+docs
+scripts
+*.md
+compose.yml
+renovate.json
+NOTICE
+LICENSE
+upstream_version.txt

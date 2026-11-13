@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows:
       - "Build container image"
+      - "Container Scan"
       - "Publish GitHub Release"
     types:
       - completed
