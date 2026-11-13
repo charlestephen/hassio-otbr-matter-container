@@ -48,8 +48,8 @@ extra ports or putting containers on a user-defined network.
 
 If Home Assistant already runs elsewhere (not in this compose file), point its
 integrations at the **host IP** instead of loopback, e.g.
-`http://10.0.3.4:8081` and `ws://10.0.3.4:5580/ws`, and still run `otbr` +
-`matter-server` with host networking on the machine that has the radio + BT.
+`http://<host-ip>:8081` and `ws://<host-ip>:5580/ws`, and still run `thread` +
+`matter` with host networking on the machine that has the radio + BT.
 
 ## Prerequisite (host + LAN)
 
@@ -87,13 +87,13 @@ integrations at the **host IP** instead of loopback, e.g.
    ```bash
    cp .env.example .env
    # edit DEVICE / DEVICE_HOST / BACKBONE_IF (ip -br link)
-   mkdir -p ha_config otbr_data matter_data
+   mkdir -p data/hassio data/thread data/matter
    ```
 
-2. Start the stack (`podman compose` or `docker compose`):
+2. Start the stack (`hassio`, `thread`, `matter`):
 
    ```bash
-   podman compose up -d
+   docker compose up -d
    ```
 
 3. Open Home Assistant (`http://<host>:8123`) and finish onboarding if new.
@@ -130,9 +130,8 @@ commissioning stalls.
 
 ### Already have Home Assistant Container?
 
-Keep your existing `homeassistant` service; compose only `otbr` +
-`matter-server` from this file (or delete/disable the `homeassistant` service).
-Requirements that do not change:
+Keep your existing Home Assistant container; compose only `thread` + `matter`
+from this file (or remove the `hassio` service). Requirements that do not change:
 
 - HA must use **`network_mode: host`** (or otherwise reach host `:8081` / `:5580`).
 - Mount `/run/dbus` into HA if you want BT-assisted flows from HA’s side too.
@@ -142,11 +141,11 @@ Requirements that do not change:
 ### Health checks
 
 ```bash
-podman compose ps
+docker compose ps
 curl -sf http://127.0.0.1:8081/node/dataset/active | head
 curl -sf http://127.0.0.1:5580/   # Matter Server info page
-podman logs otbr --tail 80
-podman logs matter-server --tail 80
+docker logs thread --tail 80
+docker logs matter --tail 80
 ```
 
 OTBR log should show `uart-baudrate=115200` and `&uart-flow-control` for ConBee II.
@@ -183,10 +182,10 @@ Further reading:
 | **Build container image** | Multi-arch from `Containerfile` → GHCR + Docker Hub mirror |
 | **Publish GitHub Release** | On main bumps to those files (or `v*` tags / manual dispatch): creates/updates `vX.Y.Z` with notes from `CHANGELOG.md` + live HA OTBR changelog |
 
-Merge the Renovate PR (or wait if you enable automerge); the release workflow fills the GitHub Releases page. Approve Renovate onboarding PR [#1](https://github.com/charlestephen/hassio-otbr-matter-container/pull/1) if it is still open, or install the Renovate GitHub App on this repo.
+Merge the Renovate PR (or wait if you enable automerge); the release workflow fills the GitHub Releases page.
 
 ```bash
-podman build -f Containerfile --build-arg ARCH=aarch64 --build-arg VERSION="$(cat upstream_version.txt)" -t otbr:local .
+docker build -f Containerfile --build-arg ARCH=aarch64 --build-arg VERSION="$(cat upstream_version.txt)" -t otbr:local .
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
