@@ -11,7 +11,7 @@
 services:
   hassio:
     container_name: hassio
-    image: ghcr.io/home-assistant/home-assistant:stable
+    image: ghcr.io/home-assistant/home-assistant:stable@sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82
     restart: unless-stopped
     privileged: true
     network_mode: host
@@ -30,7 +30,7 @@ services:
   thread:
     container_name: thread
     # Also: docker.io/charlestephen/hassio-otbr-matter-container:latest
-    image: ghcr.io/charlestephen/hassio-otbr-matter-container:latest
+    image: ghcr.io/charlestephen/hassio-otbr-matter-container:latest@sha256:2d7226cdca0dad7a9fa69814bfe8cc2b690f3e313f3eb73a0872a407d7ba418c
     restart: unless-stopped
     privileged: true
     network_mode: host
@@ -62,7 +62,7 @@ services:
 
   matter:
     container_name: matter
-    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable@sha256:170aa093ce91c76cde4cc390918307590f0f5558fcec93f913af3cb019e6562a
     restart: unless-stopped
     network_mode: host
     privileged: true
